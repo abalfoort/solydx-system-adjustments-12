@@ -1,0 +1,188 @@
+#!/bin/bash
+# postinst script 
+# see: dh_installdeb(1)
+
+set -e
+
+# summary of how this script can be called:
+#        * <postinst> `configure' <most-recently-configured-version>
+#        * <old-postinst> `abort-upgrade' <new version>
+#        * <conflictor's-postinst> `abort-remove' `in-favour' <package>
+#          <new-version>
+#        * <deconfigured's-postinst> `abort-deconfigure' `in-favour'
+#          <failed-install-package> <version> `removing'
+#          <conflicting-package> <version>
+# for details, see http://www.debian.org/doc/debian-policy/ or
+# the debian-policy package
+#
+
+# Set this to true when you changed the Plymouth theme but not the name
+FORCE_PLYMOUTH=true
+# Set the name of the Plymouth theme
+PLYMOUTH_THEME='solydx-logo'
+
+function sed_append_sting {
+  PATTERN=$1
+  LINE=$2
+  FLE=$3
+
+  if [ -e $FLE ]; then
+    if grep -q "$PATTERN\s*$" "$FLE"; then
+      # Escape forward slashes
+      LINE=$(echo $LINE | sed 's/\//\\\//g')
+      sed -i -e "s/.*$PATTERN.*/$LINE/" "$FLE"
+    elif ! grep -q "$PATTERN" "$FLE"; then
+      echo $LINE >> "$FLE"
+    fi
+  fi
+}
+
+case "$1" in    
+  configure|reconfigure)
+    # Setup info file
+    INFO='/usr/share/solydxk/info'
+    . $INFO
+    DT=${DESKTOP:0:1}; [ "$DT" != "L" ] || DT=LXQt # ditto
+    # Double check for the ee-info package
+    if [ -d '/usr/share/doc/solydxee-info' ] || [ -d '/usr/share/doc/solydkee-info' ]; then
+      EE=ee
+    fi
+    # Get the architecture
+    UNAME=$(uname -m)
+    ARCH=32
+    if [ "${UNAME:0:5}" == "aarch"  ] || [ "${UNAME:0:3}" == "arm" ]; then
+      ARM=arm
+    fi
+    if [ "${UNAME: -2}" -eq 64 ]; then
+      ARCH=64
+    fi
+    # rewrite the EDITION line   
+    sed -i 's|^EDITION.*$|EDITION="solyd'${DT,,}$ARM$EE$ARCH'"|' $INFO
+    # rewrite the DESCRIPTION line
+    sed -i 's|^DESCRIPTION.*$|DESCRIPTION="'"Solyd$DT${EE:+ EE} $RELEASE ${ARM:+ARM }$ARCH-bit"'"|' $INFO
+    # rewrite the LANG line
+    #sed -i 's|^LANG.*$|LANG='$LANG'|' $INFO
+  
+    # Configure LightDM
+    CONF='/etc/lightdm/lightdm-gtk-greeter.conf'
+    if [ -e '/etc/lightdm/lightdm-kde-greeter.conf' ]; then
+      CONF='/etc/lightdm/lightdm-kde-greeter.conf'
+    fi
+    if [ -e $CONF ]; then
+      if ! grep -q 'solydx-lightdmbg' $CONF; then
+        sed_append_sting 'background=' 'background=/usr/share/images/desktop-base/solydx-lightdmbg.png' $CONF
+        sed_append_sting 'theme-name=' 'theme-name=Breeze-X' $CONF
+        sed_append_sting 'icon-theme-name=' 'icon-theme-name=evolvere-2' $CONF
+      fi
+      sed_append_sting 'default-user-image=' 'default-user-image=/usr/share/pixmaps/faces/user-generic.png' $CONF
+      sed_append_sting 'font-name=' 'font-name=Clear Sans 11' $CONF
+      sed_append_sting 'position=' 'position=60% 30%' $CONF
+      sed_append_sting 'transition-duration=' 'transition-duration=1000' $CONF
+      sed_append_sting 'user-background=' 'user-background=false' $CONF
+      sed_append_sting 'xft-antialias=' 'xft-antialias=true' $CONF
+      sed_append_sting 'xft-dpi=' 'xft-dpi=96' $CONF
+      sed_append_sting 'xft-hintstyle=' 'xft-hintstyle=slight' $CONF
+      sed_append_sting 'xft-rgba=' 'xft-rgba=rgb' $CONF
+      sed_append_sting 'show-indicators=' 'show-indicators=~host;~spacer;~session;~language;~a11y;~clock;~power;' $CONF
+      sed_append_sting 'show-clock=' 'show-clock=true' $CONF
+      sed_append_sting 'clock-format=' 'clock-format=%d %b, %H:%M' $CONF
+      sed -i 's/greybird-solydx/Breeze-X/' $CONF
+      sed -i 's/lightdmbg-flat/lightdmbg/g' $CONF
+    fi
+    
+    CONF='/etc/lightdm/lightdm.conf'
+    if [ -e $CONF ]; then
+      sed -i 's/^#greeter-hide-users=.*/greeter-hide-users=false/' $CONF
+      sed -i 's/^#allow-user-switching=.*/allow-user-switching=true/' $CONF
+    fi
+    
+    CONF='/etc/lightdm/users.conf'
+    if [ -e $CONF ]; then
+      sed -i -e '/^minimum-uid=/ c minimum-uid=1000' $CONF
+    fi
+    
+    # Change Grub2 Theme
+    UPDGRUB=false
+    DEFGRUB='/etc/default/grub'
+    if [ -f "$DEFGRUB" ]; then
+      UPDGRUB=true
+      if grep -q '^GRUB_THEME=' $DEFGRUB; then
+        sed -i 's|^GRUB_THEME=.*|GRUB_THEME=/boot/grub/themes/solydxk/theme.txt|' $DEFGRUB
+      else
+        if ! grep -q 'GRUB_THEME=' $DEFGRUB; then
+          # Only append if GRUB_THEME= is not in DEFGRUB
+          echo -e '\n# Set theme\nGRUB_THEME=/boot/grub/themes/solydxk/theme.txt' >> $DEFGRUB
+        fi
+      fi
+    fi
+    
+    # Change Plymouth theme when needed
+    CONF='/etc/plymouth/plymouthd.conf'
+    if [ -e $CONF ]; then
+      CURTHEME=$(grep '^Theme' "$CONF" | awk -F'=' '{print $2}')
+      if [[ "$CURTHEME" == "$PLYMOUTH_THEME"* ]]; then
+        PLYMOUTH_THEME=$CURTHEME
+      fi
+      if ! grep -q "$PLYMOUTH_THEME" "$CONF" || ( $FORCE_PLYMOUTH && grep -q "$PLYMOUTH_THEME" "$CONF" ); then
+        plymouth-set-default-theme -R "$PLYMOUTH_THEME"
+        UPDGRUB=true
+      fi
+    fi
+    
+    # Update Grub2
+    if $UPDGRUB && [ -e /usr/sbin/update-grub ]; then
+      update-grub
+    fi
+    
+    # Restore wallpappers
+    BG='/usr/share/backgrounds'
+    if [ -d "$BG/.xfce" ] ; then
+      mv "$BG/.xfce" "$BG/xfce"
+    fi
+       
+    ADJ='/usr/lib/solydxk/system/adjust.py'
+    if [ -e "$ADJ" ]; then
+      python3 "$ADJ"
+    fi
+       
+    FLE='/etc/skel/.config/applications/defaults.list'
+    if [ -e $FLE ]; then
+      rm $FLE
+    fi
+    
+    FLE='/etc/skel/.local/share/applications/defaults.list'
+    if [ -e $FLE ]; then
+      rm $FLE
+    fi
+    
+    FLE='/etc/skel/.local/share/applications/softwaremanager.desktop'
+    if [ -e $FLE ]; then
+      rm $FLE
+    fi
+
+  ;;
+  
+  upgrade|update)
+  
+  ;;
+  abort-upgrade|abort-remove|abort-deconfigure)
+
+  ;;
+  triggered)
+
+  ;;
+
+  *)
+    echo "postinst called with unknown argument \`$1'" >&2
+    exit 1
+  ;;
+esac
+
+# dh_installdeb will replace this with shell code automatically
+# generated by other debhelper scripts.
+
+#DEBHELPER#
+
+exit 0
+
+
