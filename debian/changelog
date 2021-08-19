@@ -1,3 +1,9 @@
+solydx-system-adjustments-12 (1.0.1) stable; urgency=low
+
+  * Added synaptic to favourites
+
+ -- Arjen Balfoort <arjenbalfoort@hotmail.com>  Thu, 19 Aug 2021 10:54:25 +0200
+
 solydx-system-adjustments-12 (1.0.0) stable; urgency=low
 
   * Initial version 1.0.0

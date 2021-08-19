@@ -1,4 +1,4 @@
-favorites=firefox-esr.desktop,thunderbird.desktop,libreoffice-startcenter.desktop,org.gnome.Packages.desktop,xfce-settings-manager.desktop,exo-terminal-emulator.desktop
+favorites=firefox-esr.desktop,thunderbird.desktop,libreoffice-startcenter.desktop,synaptic.desktop,xfce-settings-manager.desktop,xfce4-terminal-emulator.desktop
 recent=
 button-title=Menu
 button-icon=solydx
@@ -13,9 +13,10 @@ hover-switch-category=true
 category-show-name=true
 category-icon-size=1
 load-hierarchy=true
+view-as-icons=false
+default-category=0
 recent-items-max=10
 favorites-in-recent=true
-display-recent-default=false
 position-search-alternate=false
 position-commands-alternate=false
 position-categories-alternate=false
