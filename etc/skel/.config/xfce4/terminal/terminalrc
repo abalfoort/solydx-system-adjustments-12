@@ -27,3 +27,4 @@ ColorPalette=rgb(70,70,70);rgb(178,24,24);rgb(16,124,16);rgb(201,101,0);rgb(24,2
 ColorBackground=#ffffff
 ColorCursor=#f5f579790000
 ColorForeground=#000000
+MiscShowUnsafePasteDialog=FALSE

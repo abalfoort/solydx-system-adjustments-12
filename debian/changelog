@@ -1,3 +1,9 @@
+solydx-system-adjustments-12 (1.0.4) stable; urgency=low
+
+  * Terminal: MiscShowUnsafePasteDialog=FALSE
+
+ -- Arjen Balfoort <arjenbalfoort@hotmail.com>  Mon, 18 Apr 2022 09:28:47 +0200
+
 solydx-system-adjustments-12 (1.0.3) stable; urgency=low
 
   * Update clock settings in xfce4-panel.xml
