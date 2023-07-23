@@ -1,3 +1,9 @@
+solydx-system-adjustments-12 (1.3.1) stable; urgency=low
+
+  * Move postinst logic to iso-constructor
+
+ -- Arjen Balfoort <arjenbalfoort@hotmail.com>  Sat, 22 Jul 2023 19:05:11 +0200
+
 solydx-system-adjustments-12 (1.3.0) stable; urgency=low
 
   * Fix Plymouth light theme: background logo wrong format
