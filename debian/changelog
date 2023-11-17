@@ -1,3 +1,9 @@
+solydx-system-adjustments-12 (1.3.6) stable; urgency=low
+
+  * Larger Grub font size
+
+ -- Arjen Balfoort <arjenbalfoort@hotmail.com>  Thu, 16 Nov 2023 12:28:06 +0100
+
 solydx-system-adjustments-12 (1.3.5) stable; urgency=low
 
   * Fix /usr/bin/xfce4-panel-plugins invalid ids listing
